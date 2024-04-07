@@ -1,34 +1,54 @@
-type Id = string
-
+type id = string
 type Expr =
-  | Assignation of Id*Expr*Expr
-  | Getting of Id
+  | None
   | Int of int
   | Float of float
   | String of string
+  | Assign of id*Expr*Expr
+  | Get of id
+  | Func of Expr list
+  | Print of string*id*string
+  | Call of id*(id*Expr) list
 
-type Environment = Map<Id, Expr>
 
-let func = function 
-  | "+" -> (function 
-    | Int(a), Int(b) -> Int(a+b)
-    | Float(a), Float(b) -> Float(a+b)
-    | String(a), String(b) -> String(a+b))
+type Env = Map<id, Expr>
 
-func "+" (Float(1.2), Float(2.3))
-func "+" (Int(1), Int(2))
-func "+" (String("abs"), String("cvf"))
+let printExpr = function
+  | Int(n) -> printf "%d" (n)
+  | Float(f) -> printf "%f" (f)
+  | String(s) -> printf "%s" (s)
+  | other -> failwithf "Error: Print: unresolved type: %A" (other)
 
-let rec evaluate expr (env: Environment) =
+
+let rec eval (expr: Expr) (env: Env) = 
   match expr with
-    | Int(n) -> Int(n)
-    | Float(f) -> Float(f)
-    | String(str) -> String(str)
-    | Getting(id) -> Map.find id env 
-    | Assignation(id, what, toWhat) -> 
-      let data = evaluate what env in evaluate toWhat (Map.add id data env)
+  | None -> None
+  | Int(n) -> Int(n)
+  | Float(f) -> Float(f)
+  | String(s) -> String(s)
+  | Assign(id, exprWhat, exprWhere) -> 
+     eval exprWhere (Map.add id exprWhat env)
+  | Get(id) -> Map.find id env
+  | Call(id, args) -> 
+    match Map.find id env with
+    | Func(commands) ->
+      let newEnv = List.fold (fun curEnv (id, exprInner) -> Map.add id (eval exprInner curEnv) curEnv) env args in
+      List.fold (fun _ command -> eval command newEnv) None commands
+    | other -> failwithf "Eval: unresolved id to Call: %A" (other)
+  | Print(before, whatId, after) -> 
+    printf "%s" (before) 
+    printExpr (eval (Get(whatId)) env)
+    printf "%s" (after)
+    None
 
+let args = [("age", Int(25)); ("name", String("Vasua"))]
+let cmds = [
+  Print("Name: ", "name", "!\n");
+  Print("Age: ", "age", "\n");
+  Assign("sex", (String("man")), Print("Sex: ", "sex", " Yep!\n"));
+  Call("func", args)
+    ]
 
-let expr1 = Assignation("bullet", Int(5), Getting("bullet"))
-
-evaluate expr1 Map.empty
+let func = Func(cmds)
+eval (Assign("func", func, Call("func", args))) Map.empty
+    
