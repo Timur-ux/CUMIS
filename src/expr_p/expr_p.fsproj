@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="expr_p.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AST\AST.fsproj" />
+    <ProjectReference Include="..\BaseParsers\BaseParsers.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FParsec" Version="1.1.1" />
+  </ItemGroup>
+
+</Project>
